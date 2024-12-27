@@ -1,0 +1,28 @@
+version: '3'
+services:
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8081:8081"
+    networks:
+      - mynetwork
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - auth-service
+    networks:
+      - mynetwork
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9093:9093"
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
