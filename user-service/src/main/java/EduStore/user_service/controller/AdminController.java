@@ -4,12 +4,17 @@ import EduStore.user_service.DTO.BookDTO;
 import EduStore.user_service.DTO.ReviewDTO;
 import EduStore.user_service.DTO.UserDTO;
 import EduStore.user_service.entity.Book;
+import EduStore.user_service.entity.BookImage;
+import EduStore.user_service.repo.BookImageRepository;
 import EduStore.user_service.repo.BookRepository;
 import EduStore.user_service.service.AdminService;
+import EduStore.user_service.service.MinioService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.simpleframework.xml.core.Validate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,29 +25,60 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final BookRepository bookRepository;
+    private final MinioService minioService;
+    private final BookImageRepository bookImageRepository;
 
+    @PostMapping(value = "/createBook", consumes = {"multipart/form-data"})
+    public ResponseEntity<String> creatNewBookToData(
+            @RequestParam("book") String bookJson,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+        try {
 
-    @PostMapping("/createBook")
-    private ResponseEntity<?> creatNewBookToData(@RequestBody BookDTO bookDTO){
-        Book book = Book.builder()
-                .isbn(bookDTO.getIsbn())
-                .title(bookDTO.getTitle())
-                .author(bookDTO.getAuthor())
-                .description(bookDTO.getDescription())
-                .price(bookDTO.getPrice())
-                .year(bookDTO.getYear())
-                .publisher(bookDTO.getPublisher())
-                // imageUrl
-                .availability(bookDTO.getAvailability())
-                .binding(bookDTO.getBinding())
-                .weight(bookDTO.getWeight())
-                .age_limits(bookDTO.getAge_limits())
-                .delivery_description(bookDTO.getDelivery_description())
-                .build();
-        book = bookRepository.save(book);
+            ObjectMapper objectMapper = new ObjectMapper();
+            BookDTO bookDTO = objectMapper.readValue(bookJson, BookDTO.class);
 
-        return ResponseEntity.ok("Book successfully creating");
+            // Логика загрузки файла и создания книги
+            String imageUrl = null;
+            if (file != null && !file.isEmpty()) {
+                imageUrl = minioService.uploadFile(file);
+            }
+
+            Book book = Book.builder()
+                    .isbn(bookDTO.getIsbn())
+                    .title(bookDTO.getTitle())
+                    .author(bookDTO.getAuthor())
+                    .description(bookDTO.getDescription())
+                    .price(bookDTO.getPrice())
+                    .year(bookDTO.getYear())
+                    .publisher(bookDTO.getPublisher())
+                    .imageUrl(imageUrl)
+                    .availability(bookDTO.getAvailability())
+                    .binding(bookDTO.getBinding())
+                    .weight(bookDTO.getWeight())
+                    .age_limits(bookDTO.getAge_limits())
+                    .delivery_description(bookDTO.getDelivery_description())
+                    .build();
+            bookRepository.save(book);
+
+            if (imageUrl != null) {
+                BookImage bookImage = new BookImage();
+                bookImage.setBookId(book.getBookId());
+                bookImage.setImageUrl(imageUrl);
+                bookImageRepository.save(bookImage);
+            }
+            System.out.println("Received Book: " + bookDTO);
+            if (file != null) {
+                System.out.println("Received File: " + file.getOriginalFilename());
+            } else {
+                System.out.println("No file uploaded");
+            }
+            return ResponseEntity.ok("Book successfully created");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error while creating book: " + e.getMessage());
+        }
     }
+
 
     @GetMapping("/getAllBooks")
     private List<Book> getAllBooksData(){
@@ -66,7 +102,7 @@ public class AdminController {
                     bookDTO.setPrice(book.getPrice());
                     bookDTO.setYear(book.getYear());
                     bookDTO.setPublisher(book.getPublisher());
-                    // imageUrl
+                    bookDTO.setImageUrl(book.getImageUrl());
                     bookDTO.setAvailability(book.getAvailability());
                     bookDTO.setBinding(book.getBinding());
                     bookDTO.setWeight(book.getWeight());
@@ -83,7 +119,6 @@ public class AdminController {
         }
         return bookRepository.save(book).toString();
     }
-
 
     @DeleteMapping("/deleteBookFromData")
     private void deleteBookFromData(@RequestParam Long bookId){

@@ -17,10 +17,10 @@ public class BookImage {
     @Column(nullable = false)
     private Long bookId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String imageUrl;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, length = 500)
     private LocalDateTime createdAt = LocalDateTime.now();
 
 }

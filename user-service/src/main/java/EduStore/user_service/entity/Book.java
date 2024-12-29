@@ -41,7 +41,7 @@ public class Book {
     private float price;
 
     @Column(name = "year")
-    private Year year;
+    private int year;
 
     @Column(name = "publisher")
     private String publisher;
@@ -75,7 +75,7 @@ public class Book {
                 ", price='" + price + '\'' +
                 ", year='" + year +
                 ", publisher='" + publisher + '\'' +
-                // imageUrl
+                ", imageUrl='" + imageUrl + '\'' +
                 ", availability='" + availability +
                 ", binding='" + binding + '\'' +
                 ", weight='" + weight +

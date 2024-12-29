@@ -16,7 +16,7 @@ public class BookDTO {
     private String description;
     private List<Review> reviews;
     private float price;
-    private Year year;
+    private int year;
     private String publisher;
     private String imageUrl;
     private String availability;
