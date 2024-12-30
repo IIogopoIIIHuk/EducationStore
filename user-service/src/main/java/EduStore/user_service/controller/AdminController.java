@@ -2,19 +2,19 @@ package EduStore.user_service.controller;
 
 import EduStore.user_service.DTO.BookDTO;
 import EduStore.user_service.DTO.ReviewDTO;
-import EduStore.user_service.DTO.UserDTO;
 import EduStore.user_service.entity.Book;
 import EduStore.user_service.entity.BookImage;
 import EduStore.user_service.repo.BookImageRepository;
 import EduStore.user_service.repo.BookRepository;
-import EduStore.user_service.service.AdminService;
 import EduStore.user_service.service.MinioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.simpleframework.xml.core.Validate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +38,6 @@ public class AdminController {
             ObjectMapper objectMapper = new ObjectMapper();
             BookDTO bookDTO = objectMapper.readValue(bookJson, BookDTO.class);
 
-            // Логика загрузки файла и создания книги
             String imageUrl = null;
             if (file != null && !file.isEmpty()) {
                 imageUrl = minioService.uploadFile(file);
@@ -112,12 +111,68 @@ public class AdminController {
                 }).collect(Collectors.toList());
     }
 
-    @PutMapping("/changeBookData")
-    private String changingBookData(@RequestParam Long id, @RequestBody Book book){
-        if (!bookRepository.existsById(book.getBookId())){
-            return "Book not found";
+    @PutMapping(value = "/changeBookData/{bookId}", consumes = {"multipart/form-data"})
+    private String changingBookData(
+            @PathVariable Long bookId,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestParam("book") String bookJson
+    ) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Book book = objectMapper.readValue(bookJson, Book.class);
+
+        Book existingBook = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        if (file != null && !file.isEmpty()) {
+            String oldImageUrl = existingBook.getImageUrl();
+            if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
+                String oldFileName = extractFileNameFromUrl(oldImageUrl);
+                if (oldFileName != null && !oldFileName.isEmpty()) {
+                    minioService.deleteFile(oldFileName);
+                }
+            }
+
+            String newImageUrl = minioService.uploadFile(file);
+            existingBook.setImageUrl(newImageUrl);
         }
-        return bookRepository.save(book).toString();
+
+        existingBook.setTitle(book.getTitle());
+        existingBook.setAuthor(book.getAuthor());
+        existingBook.setDescription(book.getDescription());
+        existingBook.setPrice(book.getPrice());
+        existingBook.setYear(book.getYear());
+        existingBook.setPublisher(book.getPublisher());
+        existingBook.setAvailability(book.getAvailability());
+        existingBook.setBinding(book.getBinding());
+        existingBook.setWeight(book.getWeight());
+        existingBook.setAge_limits(book.getAge_limits());
+        existingBook.setDelivery_description(book.getDelivery_description());
+
+        if (book.getReviews() != null) {
+            existingBook.getReviews().clear();
+            existingBook.getReviews().addAll(book.getReviews());
+        }
+
+
+        bookRepository.save(existingBook);
+        return existingBook.toString();
+    }
+
+    private String extractFileNameFromUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return null;
+        }
+        try {
+            int lastSlashIndex = url.lastIndexOf('/');
+            int questionMarkIndex = url.indexOf('?');
+            if (lastSlashIndex == -1 || questionMarkIndex == -1) {
+                return null;
+            }
+            String encodedFileName = url.substring(lastSlashIndex + 1, questionMarkIndex);
+            return URLDecoder.decode(encodedFileName, StandardCharsets.UTF_8.name());
+        } catch (Exception e) {
+            throw new RuntimeException("Error while extracting file name from URL: " + e.getMessage(), e);
+        }
     }
 
     @DeleteMapping("/deleteBookFromData")
@@ -126,5 +181,5 @@ public class AdminController {
                 .orElseThrow(() -> new RuntimeException("Book not found"));
         bookRepository.deleteById(bookId);
     }
-    
+
 }

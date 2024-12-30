@@ -46,7 +46,7 @@ public class Book {
     @Column(name = "publisher")
     private String publisher;
 
-    @Column(name = "imageUrl")
+    @Column(name = "imageUrl", length = 500)
     private String imageUrl;
 
     @Column(name = "availability")

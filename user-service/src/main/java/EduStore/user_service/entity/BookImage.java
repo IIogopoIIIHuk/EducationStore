@@ -20,7 +20,7 @@ public class BookImage {
     @Column(nullable = false, length = 500)
     private String imageUrl;
 
-    @Column(nullable = false, updatable = false, length = 500)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
 }

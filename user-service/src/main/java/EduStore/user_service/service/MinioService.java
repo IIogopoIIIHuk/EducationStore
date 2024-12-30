@@ -3,6 +3,7 @@ package EduStore.user_service.service;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.http.Method;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -40,5 +41,20 @@ public class MinioService {
                 .object(fileName)
                 .method(Method.GET)
                 .build());
+    }
+
+
+    public void deleteFile(String fileName) {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
+            System.out.println("File deleted successfully: " + fileName);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while deleting file from MinIO: " + e.getMessage(), e);
+        }
     }
 }
