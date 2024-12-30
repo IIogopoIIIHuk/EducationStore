@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -175,10 +176,30 @@ public class AdminController {
         }
     }
 
-    @DeleteMapping("/deleteBookFromData")
-    private void deleteBookFromData(@RequestParam Long bookId){
+    @DeleteMapping("/deleteBookFromData/{bookId}")
+    private void deleteBookFromData(
+            @PathVariable Long bookId,
+            @RequestPart(value = "file", required = false) MultipartFile file
+            ){
+
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
+
+
+        String oldImageUrl = book.getImageUrl();
+        if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
+            String oldFileName = extractFileNameFromUrl(oldImageUrl);
+            if (oldFileName != null && !oldFileName.isEmpty()) {
+                minioService.deleteFile(oldFileName);
+            }
+        }
+
+
+        List<BookImage> bookImages = bookImageRepository.findByBookId(bookId);
+        if (!bookImages.isEmpty()){
+            bookImageRepository.deleteAll(bookImages);
+        }
+
         bookRepository.deleteById(bookId);
     }
 
