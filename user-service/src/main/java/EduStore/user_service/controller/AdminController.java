@@ -49,6 +49,9 @@ public class AdminController {
                     .title(bookDTO.getTitle())
                     .author(bookDTO.getAuthor())
                     .description(bookDTO.getDescription())
+                    .genre(bookDTO.getGenre())
+                    .isFree(true)
+                    .count(bookDTO.getCount())
                     .price(bookDTO.getPrice())
                     .year(bookDTO.getYear())
                     .publisher(bookDTO.getPublisher())
@@ -89,6 +92,7 @@ public class AdminController {
                     bookDTO.setTitle(book.getTitle());
                     bookDTO.setAuthor(book.getAuthor());
                     bookDTO.setDescription(book.getDescription());
+                    bookDTO.setGenre(book.getGenre());
                     bookDTO.setReviews(book.getReviews().stream()
                             .map(review -> {
                                 ReviewDTO reviewDTO = new ReviewDTO();
@@ -140,8 +144,10 @@ public class AdminController {
         existingBook.setTitle(book.getTitle());
         existingBook.setAuthor(book.getAuthor());
         existingBook.setDescription(book.getDescription());
+        existingBook.setGenre(book.getGenre());
         existingBook.setPrice(book.getPrice());
         existingBook.setYear(book.getYear());
+        existingBook.setCount(book.getCount());
         existingBook.setPublisher(book.getPublisher());
         existingBook.setAvailability(book.getAvailability());
         existingBook.setBinding(book.getBinding());

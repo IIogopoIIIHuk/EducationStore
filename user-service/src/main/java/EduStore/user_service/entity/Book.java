@@ -34,6 +34,15 @@ public class Book {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "genre")
+    private String genre;
+
+    @Column(name = "isFree")
+    private boolean isFree;
+
+    @Column(name = "counts")
+    private Integer count;
+
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
 
