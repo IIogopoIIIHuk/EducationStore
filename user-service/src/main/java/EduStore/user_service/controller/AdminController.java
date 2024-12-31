@@ -96,7 +96,7 @@ public class AdminController {
                     bookDTO.setReviews(book.getReviews().stream()
                             .map(review -> {
                                 ReviewDTO reviewDTO = new ReviewDTO();
-                                reviewDTO.setId(review.getReview_id());
+                                reviewDTO.setReview_id(review.getReview_id());
                                 reviewDTO.setBook(review.getBook());
                                 reviewDTO.setAuthor(review.getAuthor());
                                 reviewDTO.setContent(review.getContent());

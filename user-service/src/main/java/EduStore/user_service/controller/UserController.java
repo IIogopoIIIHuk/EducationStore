@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,7 @@ public class UserController {
                     bookDTO.setReviews(book.getReviews().stream()
                             .map(review -> {
                                 ReviewDTO reviewDTO = new ReviewDTO();
-                                reviewDTO.setId(review.getReview_id());
+                                reviewDTO.setReview_id(review.getReview_id());
                                 reviewDTO.setBook(review.getBook());
                                 reviewDTO.setAuthor(review.getAuthor());
                                 reviewDTO.setContent(review.getContent());
@@ -87,12 +88,28 @@ public class UserController {
         return ResponseEntity.ok("book added to cart successfully");
     }
 
-    @PutMapping("/makeReviewToBook/{bookId}")
-    private ResponseEntity<?> makeReview(
-            @PathVariable Long bookId,
-            @RequestBody Review review
-    ){
-        return ResponseEntity.ok("gefg");
+    @PostMapping("/makeReviewToBook/{bookId}")
+    private ResponseEntity<?> makeReview(@PathVariable Long bookId, @RequestBody ReviewDTO reviewDTO){
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("book not found"));
+
+        Review review = Review.builder()
+                .content(reviewDTO.getContent())
+                .author(reviewDTO.getAuthor())
+                .createdAt(LocalDateTime.now())
+                .book(book)
+                .build();
+
+        Review savedReview = reviewRepository.save(review);
+
+        ReviewDTO responseDTO = new ReviewDTO(
+                savedReview.getReview_id(),
+                savedReview.getContent(),
+                savedReview.getAuthor(),
+                savedReview.getCreatedAt()
+        );
+
+        return ResponseEntity.ok(responseDTO);
     }
 
 
