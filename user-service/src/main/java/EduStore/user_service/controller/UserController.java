@@ -5,8 +5,10 @@ import EduStore.user_service.DTO.ReviewDTO;
 import EduStore.user_service.DTO.UserDTO;
 import EduStore.user_service.entity.Book;
 import EduStore.user_service.entity.Cart;
+import EduStore.user_service.entity.Review;
 import EduStore.user_service.repo.BookRepository;
 import EduStore.user_service.repo.CartRepository;
+import EduStore.user_service.repo.ReviewRepository;
 import EduStore.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class UserController {
 
     private final BookRepository bookRepository;
     private final CartRepository cartRepository;
+    private final ReviewRepository reviewRepository;
 
     @GetMapping("/getAllBooks")
     private List<Book> getAllBooksUser(){
@@ -38,7 +41,7 @@ public class UserController {
                     bookDTO.setReviews(book.getReviews().stream()
                             .map(review -> {
                                 ReviewDTO reviewDTO = new ReviewDTO();
-                                reviewDTO.setId(review.getId());
+                                reviewDTO.setId(review.getReview_id());
                                 reviewDTO.setBook(review.getBook());
                                 reviewDTO.setAuthor(review.getAuthor());
                                 reviewDTO.setContent(review.getContent());
@@ -82,7 +85,16 @@ public class UserController {
         cartRepository.save(cart);
 
         return ResponseEntity.ok("book added to cart successfully");
-
     }
+
+    @PutMapping("/makeReviewToBook/{bookId}")
+    private ResponseEntity<?> makeReview(
+            @PathVariable Long bookId,
+            @RequestBody Review review
+    ){
+        return ResponseEntity.ok("gefg");
+    }
+
+
 
 }

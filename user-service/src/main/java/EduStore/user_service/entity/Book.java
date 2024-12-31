@@ -38,7 +38,7 @@ public class Book {
     private String genre;
 
     @Column(name = "isFree")
-    private boolean isFree;
+    private boolean free;
 
     @Column(name = "counts")
     private Integer count;

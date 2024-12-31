@@ -15,7 +15,7 @@ public class BookDTO {
     private String author;
     private String description;
     private String genre;
-    private boolean isFree;
+    private boolean free;
     private Integer count;
     private List<Review> reviews;
     private float price;
