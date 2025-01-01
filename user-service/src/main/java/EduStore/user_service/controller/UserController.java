@@ -12,6 +12,7 @@ import EduStore.user_service.repo.ReviewRepository;
 import EduStore.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,7 +62,38 @@ public class UserController {
                 .map(this::convertToBookDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(bookDTOs);
+    }
 
+    @GetMapping("/searchByPriceRange")
+    private ResponseEntity<?> searchByPriceRange(@RequestParam float minPrice, @RequestParam float maxPrice) {
+        List<Book> booksInRange = bookRepository.findByPriceBetween(minPrice, maxPrice);
+
+        if (booksInRange.isEmpty()) {
+            return ResponseEntity.status(404).body("No books found in the price range: " + minPrice + " - " + maxPrice);
+        }
+
+        List<BookDTO> bookDTOs = booksInRange.stream()
+                .map(this::convertToBookDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(bookDTOs);
+    }
+
+    @GetMapping("/sortByPrice")
+    private ResponseEntity<?> sortByPrice(@RequestParam(defaultValue = "asc") String order) {
+        List<Book> sortedBooks;
+
+        if ("desc".equalsIgnoreCase(order)) {
+            sortedBooks = bookRepository.findAll(Sort.by(Sort.Direction.DESC, "price"));
+        } else {
+            sortedBooks = bookRepository.findAll(Sort.by(Sort.Direction.ASC, "price"));
+        }
+
+        List<BookDTO> bookDTOs = sortedBooks.stream()
+                .map(this::convertToBookDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(bookDTOs);
     }
 
     @PostMapping("/addBookToCart/{bookId}")
