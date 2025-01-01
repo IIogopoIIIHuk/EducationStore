@@ -84,35 +84,37 @@ public class AdminController {
 
 
     @GetMapping("/getAllBooks")
-    private List<Book> getAllBooksData(){
+    private List<BookDTO> getAllBooksData(){
         return bookRepository.findAll().stream()
                 .map(book -> {
-                    BookDTO bookDTO = new BookDTO();
-                    bookDTO.setId(book.getBookId());
-                    bookDTO.setTitle(book.getTitle());
-                    bookDTO.setAuthor(book.getAuthor());
-                    bookDTO.setDescription(book.getDescription());
-                    bookDTO.setGenre(book.getGenre());
-                    bookDTO.setReviews(book.getReviews().stream()
-                            .map(review -> {
-                                ReviewDTO reviewDTO = new ReviewDTO();
-                                reviewDTO.setReview_id(review.getReview_id());
-                                reviewDTO.setBook(review.getBook());
-                                reviewDTO.setAuthor(review.getAuthor());
-                                reviewDTO.setContent(review.getContent());
-                                reviewDTO.setCreatedAt(review.getCreatedAt());
-                                return review;
-                            }).collect(Collectors.toList()));
-                    bookDTO.setPrice(book.getPrice());
-                    bookDTO.setYear(book.getYear());
-                    bookDTO.setPublisher(book.getPublisher());
-                    bookDTO.setImageUrl(book.getImageUrl());
-                    bookDTO.setAvailability(book.getAvailability());
-                    bookDTO.setBinding(book.getBinding());
-                    bookDTO.setWeight(book.getWeight());
-                    bookDTO.setAge_limits(book.getAge_limits());
-                    bookDTO.setDelivery_description(book.getDelivery_description());
-                    return book;
+                    List<ReviewDTO> reviewDTOs = book.getReviews().stream()
+                            .map(review -> new ReviewDTO(
+                                    review.getReview_id(),
+                                    review.getContent(),
+                                    review.getAuthor(),
+                                    review.getCreatedAt()
+                            )).collect(Collectors.toList());
+
+                    return new BookDTO(
+                            book.getBookId(),
+                            book.getIsbn(),
+                            book.getTitle(),
+                            book.getAuthor(),
+                            book.getDescription(),
+                            book.getGenre(),
+                            book.isFree(),
+                            book.getCount(),
+                            book.getPrice(),
+                            book.getYear(),
+                            book.getPublisher(),
+                            book.getImageUrl(),
+                            book.getAvailability(),
+                            book.getBinding(),
+                            book.getWeight(),
+                            book.getAge_limits(),
+                            book.getDelivery_description(),
+                            reviewDTOs
+                    );
                 }).collect(Collectors.toList());
     }
 

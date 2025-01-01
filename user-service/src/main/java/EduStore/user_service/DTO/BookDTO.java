@@ -1,12 +1,16 @@
 package EduStore.user_service.DTO;
 
 import EduStore.user_service.entity.Review;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Year;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class BookDTO {
 
     private Long id;
@@ -17,7 +21,6 @@ public class BookDTO {
     private String genre;
     private boolean free;
     private Integer count;
-    private List<Review> reviews;
     private float price;
     private int year;
     private String publisher;
@@ -27,5 +30,5 @@ public class BookDTO {
     private float weight;
     private int age_limits;
     private String delivery_description;
-
+    private List<ReviewDTO> reviews;
 }
