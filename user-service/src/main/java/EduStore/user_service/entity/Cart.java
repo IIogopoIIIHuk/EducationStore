@@ -23,8 +23,7 @@ public class Cart {
     @Column(name = "title_book")
     private String title_book;
 
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id", nullable = false)
     @JsonBackReference
     private Book book;

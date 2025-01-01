@@ -43,8 +43,6 @@ public class Book {
     @Column(name = "counts")
     private Integer count;
 
-
-
     @Column(name = "price")
     private float price;
 
@@ -74,6 +72,7 @@ public class Book {
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
+
     @Override
     public String toString(){
         return "Book {" +
