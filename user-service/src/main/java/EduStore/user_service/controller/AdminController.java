@@ -2,6 +2,7 @@ package EduStore.user_service.controller;
 
 import EduStore.user_service.DTO.BookDTO;
 import EduStore.user_service.DTO.ReviewDTO;
+import EduStore.user_service.config.KafkaManageProducer;
 import EduStore.user_service.entity.Book;
 import EduStore.user_service.entity.BookImage;
 import EduStore.user_service.repo.BookImageRepository;
@@ -28,6 +29,7 @@ public class AdminController {
     private final BookRepository bookRepository;
     private final MinioService minioService;
     private final BookImageRepository bookImageRepository;
+    private final KafkaManageProducer kafkaManageProducer;
 
     @PostMapping(value = "/createBook", consumes = {"multipart/form-data"})
     public ResponseEntity<String> creatNewBookToData(
@@ -76,6 +78,8 @@ public class AdminController {
             } else {
                 System.out.println("No file uploaded");
             }
+
+            kafkaManageProducer.sendMessage("book-added", "New book added: " + book.getTitle());
             return ResponseEntity.ok("Book successfully created");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error while creating book: " + e.getMessage());

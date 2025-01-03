@@ -3,6 +3,7 @@ package EduStore.user_service.controller;
 import EduStore.user_service.DTO.BookDTO;
 import EduStore.user_service.DTO.ReviewDTO;
 import EduStore.user_service.DTO.UserDTO;
+import EduStore.user_service.config.KafkaManageProducer;
 import EduStore.user_service.entity.Book;
 import EduStore.user_service.entity.Cart;
 import EduStore.user_service.entity.Review;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,10 +31,65 @@ public class UserController {
     private final BookRepository bookRepository;
     private final CartRepository cartRepository;
     private final ReviewRepository reviewRepository;
+    private final KafkaManageProducer kafkaManageProducer;
 
     @GetMapping("/getAllBooks")
     private List<BookDTO> getAllBooksUser() {
         return bookRepository.findAll().stream()
+                .map(this::convertToBookDTO)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/sortList")
+    private List<BookDTO> getSortList(
+            @RequestParam(required = false) String bookTitle,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String order
+    ){
+        List<Book> books = bookRepository.findAll();
+
+        // поиск по названию книги (учитывается нижний регистр и совпадение букв в названиях)
+        if (bookTitle != null && !bookTitle.isEmpty()){
+            books = books.stream()
+                    .filter(book -> book.getTitle().toLowerCase().contains(bookTitle.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        // сортировка по цене
+        if (minPrice != null && maxPrice != null){
+            books = books.stream()
+                    .filter(book -> {
+                        double price = book.getPrice();
+                        return (minPrice == null || price >= minPrice) && (maxPrice == null || price <= maxPrice);
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        // Сортировка по возрастанию/убыванию
+        if (sortBy != null) {
+            Comparator<Book> comparator = switch (sortBy) {
+                case "name" -> Comparator.comparing(Book::getTitle);
+                case "price" -> Comparator.comparingDouble(Book::getPrice);
+                default -> Comparator.comparing(Book::getBookId);
+            };
+
+            if ("desc".equalsIgnoreCase(order)) {
+                comparator = comparator.reversed();
+            }
+
+            books.sort(comparator);
+        } else if (sortBy == null) {
+            Comparator<Book> comparator = Comparator.comparing(Book::getBookId);
+            if ("desc".equalsIgnoreCase(order)){
+                comparator = comparator.reversed();
+            }
+            books.sort(comparator);
+        }
+
+
+        return books.stream()
                 .map(this::convertToBookDTO)
                 .collect(Collectors.toList());
     }
@@ -119,6 +176,7 @@ public class UserController {
                 .build();
         cartRepository.save(cart);
 
+        kafkaManageProducer.sendMessage("cart-book", "Book added to cart: " + book.getTitle());
         return ResponseEntity.ok("book added to cart successfully");
     }
 
@@ -143,6 +201,7 @@ public class UserController {
                 savedReview.getCreatedAt()
         );
 
+        kafkaManageProducer.sendMessage("book-review", "New review: " + review.getContent() + "from user: " + review.getAuthor() + "added for book: " + book.getTitle());
         return ResponseEntity.ok(responseDTO);
     }
 
