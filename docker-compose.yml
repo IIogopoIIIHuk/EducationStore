@@ -1,5 +1,20 @@
-version: '3.8'
 services:
+  db:
+    image: 'postgres:17'
+    container_name: db
+    expose:
+      - '5432'
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Chelovek051403
+      POSTGRES_DB: EduStore
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
   user-service:
     build:
       context: ./user-service
@@ -8,10 +23,16 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - SPRING_PROFILES_ACTIVE=default
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/EduStore
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Chelovek051403
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
+      - db
       - kafka
+    networks:
+      - app_network
 
   notification-service:
     build:
@@ -21,13 +42,15 @@ services:
     ports:
       - "8082:8082"
     environment:
-      - SPRING_PROFILES_ACTIVE=default
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      SPRING_PROFILES_ACTIVE: default
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - kafka
+    networks:
+      - app_network
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: bitnami/kafka:latest
     container_name: kafka
     ports:
       - "9092:9092"
@@ -38,12 +61,24 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
+    networks:
+      - app_network
+
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: bitnami/zookeeper:latest
     container_name: zookeeper
     ports:
       - "2181:2181"
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      ALLOW_ANONYMOUS_LOGIN: yes
+    networks:
+      - app_network
+
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
