@@ -1,5 +1,5 @@
 # Используем базовый образ OpenJDK
-FROM openjdk:17-jdk-slim
+FROM openjdk:21-jdk-slim
 
 # Указываем рабочую директорию
 WORKDIR /app

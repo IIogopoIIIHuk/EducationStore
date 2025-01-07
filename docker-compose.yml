@@ -15,6 +15,21 @@ services:
     networks:
       - app_network
 
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - app_network
+
   user-service:
     build:
       context: ./user-service
@@ -28,9 +43,15 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: Chelovek051403
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: new-book-store-images
+      SERVER_PORT: 8081
     depends_on:
       - db
       - kafka
+      - minio
     networks:
       - app_network
 
@@ -44,8 +65,14 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: default
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: djavakafka@gmail.com
+      SPRING_MAIL_PASSWORD: ehza lvvp amjz xugy
+      SERVER_PORT: 8082
     depends_on:
       - kafka
+      - db
     networks:
       - app_network
 
@@ -78,6 +105,7 @@ services:
 
 volumes:
   postgres_data:
+  minio_data:
 
 networks:
   app_network:
